@@ -1,75 +1,76 @@
 import { useEffect, useState } from "react";
 
 function App() {
-
-  // INDICADORES
   const [indicadores, setIndicadores] = useState([]);
-  const [name, setName] = useState("");
-
-  // COTAÇÕES
   const [cotacoes, setCotacoes] = useState([]);
-  const [valor, setValor] = useState("");
-  const [indicadorId, setIndicadorId] = useState("");
 
-  // CARREGAR INDICADORES
-  const carregarIndicadores = () => {
+  const [novoIndicador, setNovoIndicador] = useState("");
+  const [valorCotacao, setValorCotacao] = useState("");
+  const [indicadorSelecionado, setIndicadorSelecionado] = useState("");
+  const [pesquisa, setPesquisa] = useState("");
+
+  const buscarIndicadores = () => {
     fetch("http://localhost:8080/indicadores")
       .then((res) => res.json())
-      .then((data) => setIndicadores(data));
+      .then((dados) => setIndicadores(dados));
   };
 
-  // CARREGAR COTAÇÕES
-  const carregarCotacoes = () => {
+  const buscarCotacoes = () => {
     fetch("http://localhost:8080/cotacoes")
       .then((res) => res.json())
-      .then((data) => setCotacoes(data));
+      .then((dados) => setCotacoes(dados));
   };
 
-  // INICIAR
   useEffect(() => {
-    carregarIndicadores();
-    carregarCotacoes();
+    buscarIndicadores();
+    buscarCotacoes();
   }, []);
 
-  // CRIAR INDICADOR
-  const criarIndicador = () => {
-
-    if (!name) return;
+  const adicionarIndicador = () => {
+    if (!novoIndicador.trim()) {
+      alert("Informe um nome para o indicador.");
+      return;
+    }
 
     fetch("http://localhost:8080/indicadores", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({
+        name: novoIndicador,
+      }),
     }).then(() => {
-
-      setName("");
-      carregarIndicadores();
-
+      setNovoIndicador("");
+      buscarIndicadores();
     });
-
   };
 
-  // DELETAR INDICADOR
-  const deletarIndicador = (id) => {
+  const removerIndicador = (id) => {
+    const confirmar = window.confirm(
+      "Deseja realmente excluir este indicador?"
+    );
+
+    if (!confirmar) return;
 
     fetch(`http://localhost:8080/indicadores/${id}`, {
       method: "DELETE",
-    }).then(() => carregarIndicadores());
-
+    }).then(() => {
+      buscarIndicadores();
+    });
   };
 
-  // CRIAR COTAÇÃO
-  const criarCotacao = () => {
+  const adicionarCotacao = () => {
+    if (!valorCotacao || !indicadorSelecionado) {
+      alert("Preencha todos os campos.");
+      return;
+    }
 
-    if (!valor || !indicadorId) return;
-
-    const body = {
-      valor: parseFloat(valor),
+    const dados = {
+      valor: parseFloat(valorCotacao),
       dataHora: new Date().toISOString(),
       indicador: {
-        id: parseInt(indicadorId),
+        id: parseInt(indicadorSelecionado),
       },
     };
 
@@ -78,60 +79,78 @@ function App() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(dados),
     }).then(() => {
-
-      setValor("");
-      setIndicadorId("");
-
-      carregarCotacoes();
-
+      setValorCotacao("");
+      setIndicadorSelecionado("");
+      buscarCotacoes();
     });
-
   };
 
-  // DELETAR COTAÇÃO
-  const deletarCotacao = (id) => {
+  const removerCotacao = (id) => {
+    const confirmar = window.confirm(
+      "Deseja realmente excluir esta cotação?"
+    );
+
+    if (!confirmar) return;
 
     fetch(`http://localhost:8080/cotacoes/${id}`, {
       method: "DELETE",
-    }).then(() => carregarCotacoes());
-
+    }).then(() => {
+      buscarCotacoes();
+    });
   };
 
+  const calcularAlturaBarra = (valor) => {
+    return valor / 20;
+  };
+
+  const indicadoresFiltrados = indicadores.filter((item) =>
+    item.name.toLowerCase().includes(pesquisa.toLowerCase())
+  );
+
   return (
-
     <div style={{ padding: "20px" }}>
-
-      <h1>Sistema de Cotações</h1>
+      <h1>Acompanhamento de Indicadores</h1>
 
       <hr />
 
       <h2>Indicadores</h2>
 
       <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
+        value={novoIndicador}
+        onChange={(e) => setNovoIndicador(e.target.value)}
         placeholder="Nome do indicador"
       />
 
-      <button onClick={criarIndicador}>
-        Criar
+      <button onClick={adicionarIndicador}>
+        Adicionar
       </button>
 
-      <ul>
-        {indicadores.map((i) => (
-          <li key={i.id}>
+      <br />
+      <br />
 
-            {i.name}
+      <input
+        value={pesquisa}
+        onChange={(e) => setPesquisa(e.target.value)}
+        placeholder="Pesquisar indicador..."
+      />
+
+      {indicadores.length === 0 && (
+        <p>Nenhum indicador cadastrado.</p>
+      )}
+
+      <ul>
+        {indicadoresFiltrados.map((item) => (
+          <li key={item.id}>
+            {item.name}
 
             <button
-              onClick={() => deletarIndicador(i.id)}
+              onClick={() => removerIndicador(item.id)}
               style={{ marginLeft: "10px" }}
             >
-              X
+              Excluir
             </button>
-
           </li>
         ))}
       </ul>
@@ -143,93 +162,87 @@ function App() {
       <input
         type="number"
         placeholder="Valor"
-        value={valor}
-        onChange={(e) => setValor(e.target.value)}
+        value={valorCotacao}
+        onChange={(e) => setValorCotacao(e.target.value)}
       />
 
       <select
-        value={indicadorId}
-        onChange={(e) => setIndicadorId(e.target.value)}
+        value={indicadorSelecionado}
+        onChange={(e) => setIndicadorSelecionado(e.target.value)}
         style={{ marginLeft: "10px" }}
       >
-
         <option value="">
-          Selecione
+          Selecione um indicador
         </option>
 
-        {indicadores.map((i) => (
-          <option key={i.id} value={i.id}>
-            {i.name}
+        {indicadores.map((item) => (
+          <option key={item.id} value={item.id}>
+            {item.name}
           </option>
         ))}
-
       </select>
 
       <button
-        onClick={criarCotacao}
+        onClick={adicionarCotacao}
         style={{ marginLeft: "10px" }}
       >
-        Criar Cotação
+        Registrar Cotação
       </button>
 
-      <ul>
-        {cotacoes.map((c) => (
-          <li key={c.id}>
+      {cotacoes.length === 0 && (
+        <p>Nenhuma cotação cadastrada.</p>
+      )}
 
-            {c.indicador?.name} - R$ {c.valor}
+      <ul>
+        {cotacoes.map((item) => (
+          <li key={item.id}>
+            {item.indicador?.name} - R$ {item.valor}
 
             <button
-              onClick={() => deletarCotacao(c.id)}
+              onClick={() => removerCotacao(item.id)}
               style={{ marginLeft: "10px" }}
             >
-              X
+              Excluir
             </button>
-
           </li>
         ))}
       </ul>
 
       <hr />
 
-      <h2>Gráfico Simples</h2>
+      <h2>Evolução das Cotações</h2>
 
       <div
         style={{
           display: "flex",
           alignItems: "flex-end",
-          gap: "20px",
+          gap: "15px",
           height: "300px",
-          border: "1px solid gray",
+          border: "1px solid #ccc",
           padding: "20px",
-          marginTop: "20px"
+          overflowX: "auto",
         }}
       >
-
-        {cotacoes.map((c) => (
-
+        {cotacoes.map((item) => (
           <div
-            key={c.id}
+            key={item.id}
             style={{
-              width: "80px",
-              height: `${c.valor / 20}px`,
-              backgroundColor: "blue",
-              color: "black",
-              textAlign: "center",
+              width: "70px",
+              height: `${calcularAlturaBarra(item.valor)}px`,
+              backgroundColor: "#2563eb",
+              color: "white",
               display: "flex",
-              alignItems: "flex-end",
               justifyContent: "center",
-              paddingBottom: "5px"
+              alignItems: "flex-end",
+              paddingBottom: "5px",
+              borderRadius: "4px",
             }}
           >
-            {c.valor}
+            {item.valor}
           </div>
-
         ))}
-
       </div>
-
     </div>
-
   );
 }
 
