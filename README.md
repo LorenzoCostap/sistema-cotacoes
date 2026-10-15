@@ -1,6 +1,6 @@
 # 📈 Sistema de Cotações
 
-Aplicação full stack para **acompanhamento de indicadores e suas cotações**. Dá para cadastrar indicadores, registrar valores ao longo do tempo e ver a evolução em um gráfico de barras.
+Aplicação full stack para **acompanhar indicadores e suas cotações**. Você cadastra indicadores (dólar, CDI, preço de um insumo…), registra valores ao longo do tempo e vê a evolução num gráfico de barras.
 
 ![Java](https://img.shields.io/badge/java_17-%23ED8B00.svg?style=flat&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat&logo=springboot&logoColor=white)
@@ -9,16 +9,21 @@ Aplicação full stack para **acompanhamento de indicadores e suas cotações**.
 
 ## ✨ Funcionalidades
 
-- Cadastro, edição, busca e exclusão de **indicadores**
+- Cadastro, **pesquisa** e exclusão de **indicadores** (com confirmação antes de excluir)
 - Registro de **cotações** (valor + data/hora) vinculadas a um indicador
-- Gráfico com a **evolução das cotações**
+- **Gráfico de barras** com a evolução das cotações
+- API REST completa, incluindo edição de indicadores
 
 ## 🏗️ Estrutura
 
 ```
 sistema-cotacoes/
 ├── backend/    # API REST em Spring Boot (JPA + H2 em memória)
-└── frontend/   # Interface em React
+│   └── src/main/java/backend/
+│       ├── controller/  # IndicadorController e CotacaoController
+│       ├── model/       # Indicador e Cotacao
+│       └── repository/  # Spring Data JPA
+└── frontend/   # Interface em React (Create React App)
 ```
 
 ## 🔌 Endpoints da API
@@ -34,6 +39,8 @@ sistema-cotacoes/
 | DELETE | `/cotacoes/{id}` | Remove uma cotação |
 
 ## ▶️ Como rodar
+
+Requisitos: **Java 17+** e **Node.js**.
 
 **Backend** (porta 8080):
 
@@ -52,4 +59,4 @@ npm install
 npm start
 ```
 
-Depois é só abrir `http://localhost:3000`.
+Depois é só abrir `http://localhost:3000`. O frontend espera a API em `http://localhost:8080`, então suba o backend primeiro.
